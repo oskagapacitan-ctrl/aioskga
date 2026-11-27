@@ -1,0 +1,6 @@
+{
+  "name": "OSIS SMKN 3 Pacitan — OSKAGA",
+  "description": "Portal resmi OSIS SMKN 3 Pacitan (OSKAGA): barcode kenang-kenangan tiap angkatan, kotak saran & kritik, informasi kegiatan OSIS, serta media sosial Instagram dan TikTok SMKN 3 Pacitan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

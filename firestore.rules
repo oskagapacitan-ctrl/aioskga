@@ -1,0 +1,257 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection health check document
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // --- Reusable Hardened Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdminEmail() {
+      return isVerifiedUser() && request.auth.token.email == 'oskagapacitan@gmail.com';
+    }
+
+    function isAdmin() {
+      return isAdminEmail() || (
+        isVerifiedUser() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // --- Validation Blueprints ---
+    function isValidBatch(data) {
+      return data.keys().hasAll(['year', 'title', 'theme', 'isActive', 'createdAt'])
+        && data.keys().hasOnly(['year', 'title', 'theme', 'isActive', 'createdAt'])
+        && data.year is string && data.year.size() == 4 && data.year.matches('^[0-9]{4}$')
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 100
+        && data.theme is string && data.theme.size() >= 3 && data.theme.size() <= 160
+        && data.isActive is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidMemory(data) {
+      return data.keys().hasAll(['batchId', 'batchYear', 'authorUid', 'studentName', 'className', 'message', 'quote', 'isPublic', 'createdAt'])
+        && data.keys().hasOnly(['batchId', 'batchYear', 'authorUid', 'studentName', 'className', 'message', 'quote', 'isPublic', 'createdAt'])
+        && isValidId(data.batchId)
+        && data.batchId.size() >= 3 && data.batchId.size() <= 64
+        && data.batchYear is string && data.batchYear.size() == 4 && data.batchYear.matches('^[0-9]{4}$')
+        && data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128
+        && data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 80
+        && data.className is string && data.className.size() >= 2 && data.className.size() <= 50
+        && data.message is string && data.message.size() >= 5 && data.message.size() <= 600
+        && data.quote is string && data.quote.size() <= 160
+        && data.isPublic is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['authorUid', 'senderName', 'className', 'feedbackType', 'category', 'message', 'isPublic', 'status', 'adminReply', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['authorUid', 'senderName', 'className', 'feedbackType', 'category', 'message', 'isPublic', 'status', 'adminReply', 'createdAt', 'updatedAt'])
+        && data.authorUid is string && data.authorUid.size() >= 1 && data.authorUid.size() <= 128
+        && data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 80
+        && data.className is string && data.className.size() <= 50
+        && data.feedbackType in ['Saran', 'Kritik', 'Aspirasi']
+        && data.category in ['Kegiatan OSIS', 'Fasilitas Sekolah', 'Ekstrakurikuler', 'Lainnya']
+        && data.message is string && data.message.size() >= 10 && data.message.size() <= 800
+        && data.isPublic is bool
+        && data.status in ['Baru', 'Diproses', 'Selesai']
+        && data.adminReply is string && data.adminReply.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidOsisEvent(data) {
+      return data.keys().hasAll(['title', 'category', 'dateLabel', 'location', 'organizer', 'summary', 'description', 'imageUrl', 'isPublished', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['title', 'category', 'dateLabel', 'location', 'organizer', 'summary', 'description', 'imageUrl', 'isPublished', 'createdAt', 'updatedAt'])
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 120
+        && data.category in ['Akan Datang', 'Terlaksana', 'Program Kerja']
+        && data.dateLabel is string && data.dateLabel.size() >= 3 && data.dateLabel.size() <= 60
+        && data.location is string && data.location.size() >= 2 && data.location.size() <= 100
+        && data.organizer is string && data.organizer.size() >= 2 && data.organizer.size() <= 80
+        && data.summary is string && data.summary.size() >= 10 && data.summary.size() <= 240
+        && data.description is string && data.description.size() >= 10 && data.description.size() <= 1500
+        && data.imageUrl is string && data.imageUrl.size() <= 300
+        && data.isPublished is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSocialSettings(data) {
+      return data.keys().hasAll([
+          'schoolInstagramHandle', 'schoolInstagramUrl',
+          'osisInstagramHandle', 'osisInstagramUrl',
+          'schoolTiktokHandle', 'schoolTiktokUrl',
+          'osisTiktokHandle', 'osisTiktokUrl',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'schoolInstagramHandle', 'schoolInstagramUrl',
+          'osisInstagramHandle', 'osisInstagramUrl',
+          'schoolTiktokHandle', 'schoolTiktokUrl',
+          'osisTiktokHandle', 'osisTiktokUrl',
+          'updatedAt'
+        ])
+        && data.schoolInstagramHandle is string && data.schoolInstagramHandle.size() >= 2 && data.schoolInstagramHandle.size() <= 60
+        && data.schoolInstagramUrl is string && data.schoolInstagramUrl.size() >= 10 && data.schoolInstagramUrl.size() <= 200
+        && data.osisInstagramHandle is string && data.osisInstagramHandle.size() >= 2 && data.osisInstagramHandle.size() <= 60
+        && data.osisInstagramUrl is string && data.osisInstagramUrl.size() >= 10 && data.osisInstagramUrl.size() <= 200
+        && data.schoolTiktokHandle is string && data.schoolTiktokHandle.size() >= 2 && data.schoolTiktokHandle.size() <= 60
+        && data.schoolTiktokUrl is string && data.schoolTiktokUrl.size() >= 10 && data.schoolTiktokUrl.size() <= 200
+        && data.osisTiktokHandle is string && data.osisTiktokHandle.size() >= 2 && data.osisTiktokHandle.size() <= 60
+        && data.osisTiktokUrl is string && data.osisTiktokUrl.size() >= 10 && data.osisTiktokUrl.size() <= 200
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['role', 'name', 'createdAt'])
+        && data.keys().hasOnly(['role', 'name', 'createdAt'])
+        && data.role == 'admin'
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 80
+        && data.createdAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Batches (Angkatan QR Code)
+    match /batches/{batchId} {
+      allow get: if isValidId(batchId) && (existing().isActive == true || isAdmin());
+      allow list: if existing().isActive == true || isAdminEmail();
+      allow create: if isAdmin() && isValidId(batchId) && isValidBatch(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin() && isValidId(batchId) && isValidBatch(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['year', 'title', 'theme', 'isActive']);
+      allow delete: if isAdmin() && isValidId(batchId);
+    }
+
+    // 2. Memories (Kenang-Kenangan Tiap Angkatan)
+    match /memories/{memoryId} {
+      allow get: if isValidId(memoryId) && (
+        existing().isPublic == true ||
+        isAdmin() ||
+        (isSignedIn() && existing().authorUid == request.auth.uid)
+      );
+      allow list: if existing().isPublic == true ||
+        isAdminEmail() ||
+        (isSignedIn() && existing().authorUid == request.auth.uid);
+      allow create: if isVerifiedUser()
+        && isValidId(memoryId)
+        && isValidMemory(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().isPublic == true
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/batches/$(incoming().batchId));
+      allow update: if isVerifiedUser()
+        && isValidId(memoryId)
+        && isValidMemory(incoming())
+        && incoming().authorUid == existing().authorUid
+        && incoming().batchId == existing().batchId
+        && incoming().batchYear == existing().batchYear
+        && incoming().createdAt == existing().createdAt
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['studentName', 'className', 'message', 'quote', 'isPublic'])) ||
+          (existing().authorUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['studentName', 'className', 'message', 'quote']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(memoryId) && (
+        existing().authorUid == request.auth.uid || isAdmin()
+      );
+    }
+
+    // 3. Feedback (Saran, Kritik & Aspirasi)
+    match /feedback/{feedbackId} {
+      allow get: if isValidId(feedbackId) && (
+        existing().isPublic == true ||
+        isAdmin() ||
+        (isSignedIn() && existing().authorUid == request.auth.uid)
+      );
+      allow list: if existing().isPublic == true ||
+        isAdminEmail() ||
+        (isSignedIn() && existing().authorUid == request.auth.uid);
+      allow create: if isVerifiedUser()
+        && isValidId(feedbackId)
+        && isValidFeedback(incoming())
+        && incoming().authorUid == request.auth.uid
+        && incoming().status == 'Baru'
+        && incoming().adminReply == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(feedbackId)
+        && isValidFeedback(incoming())
+        && incoming().authorUid == existing().authorUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminReply', 'isPublic', 'updatedAt'])) ||
+          (existing().authorUid == request.auth.uid
+            && existing().status == 'Baru'
+            && incoming().status == 'Baru'
+            && incoming().adminReply == existing().adminReply
+            && incoming().diff(existing()).affectedKeys().hasOnly(['senderName', 'className', 'feedbackType', 'category', 'message', 'isPublic', 'updatedAt']))
+        );
+      allow delete: if isVerifiedUser() && isValidId(feedbackId) && (
+        isAdmin() || (existing().authorUid == request.auth.uid && existing().status == 'Baru')
+      );
+    }
+
+    // 4. Events (Informasi Kegiatan OSIS)
+    match /events/{eventId} {
+      allow get: if isValidId(eventId) && (existing().isPublished == true || isAdmin());
+      allow list: if existing().isPublished == true || isAdminEmail();
+      allow create: if isAdmin() && isValidId(eventId) && isValidOsisEvent(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin() && isValidId(eventId) && isValidOsisEvent(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'dateLabel', 'location', 'organizer', 'summary', 'description', 'imageUrl', 'isPublished', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(eventId);
+    }
+
+    // 5. Settings (Instagram & TikTok Links)
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && (settingId == 'social' || isAdmin());
+      allow list: if isAdminEmail();
+      allow create, update: if isAdmin() && isValidId(settingId) && isValidSocialSettings(incoming())
+        && incoming().updatedAt == request.time;
+      allow delete: if isAdmin() && isValidId(settingId);
+    }
+
+    // 6. Admins
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isAdmin() || (isVerifiedUser() && adminId == request.auth.uid));
+      allow list: if isAdminEmail();
+      allow create: if isAdminEmail() && isValidId(adminId) && isValidAdminUser(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isAdminEmail() && isValidId(adminId) && isValidAdminUser(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'name']);
+      allow delete: if isAdminEmail() && isValidId(adminId);
+    }
+  }
+}

@@ -1,0 +1,380 @@
+{
+  "entities": {
+    "Batch": {
+      "title": "Batch",
+      "description": "Angkatan siswa SMKN 3 Pacitan beserta informasi tema kenang-kenangan untuk QR code",
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "pattern": "^[0-9]{4}$",
+          "description": "Tahun kelulusan atau angkatan (4 digit)"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Judul angkatan"
+        },
+        "theme": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160,
+          "description": "Slogan atau tema kenang-kenangan angkatan"
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Status aktif untuk ditampilkan di portal barcode"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pembuatan dokumen"
+        }
+      },
+      "required": ["year", "title", "theme", "isActive", "createdAt"]
+    },
+    "Memory": {
+      "title": "Memory",
+      "description": "Catatan kenang-kenangan siswa tiap angkatan yang dikirim melalui barcode atau web",
+      "type": "object",
+      "properties": {
+        "batchId": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "ID dokumen angkatan"
+        },
+        "batchYear": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 4,
+          "pattern": "^[0-9]{4}$",
+          "description": "Tahun angkatan"
+        },
+        "authorUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID pengirim terautentikasi"
+        },
+        "studentName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Nama siswa atau alumni"
+        },
+        "className": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 50,
+          "description": "Kelas atau kompetensi keahlian"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 600,
+          "description": "Pesan dan kenangan selama bersekolah di SMKN 3 Pacitan"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 160,
+          "description": "Kutipan singkat angkatan"
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Penanda tampil di dinding kenangan publik"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu pengiriman"
+        }
+      },
+      "required": [
+        "batchId",
+        "batchYear",
+        "authorUid",
+        "studentName",
+        "className",
+        "message",
+        "quote",
+        "isPublic",
+        "createdAt"
+      ]
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "Saran, kritik, dan aspirasi siswa untuk OSIS dan sekolah",
+      "type": "object",
+      "properties": {
+        "authorUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID pengirim"
+        },
+        "senderName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Nama pengirim atau Anonim"
+        },
+        "className": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 50,
+          "description": "Kelas pengirim (opsional)"
+        },
+        "feedbackType": {
+          "type": "string",
+          "enum": ["Saran", "Kritik", "Aspirasi"],
+          "description": "Jenis masukan"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Kegiatan OSIS", "Fasilitas Sekolah", "Ekstrakurikuler", "Lainnya"],
+          "description": "Kategori masukan"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 800,
+          "description": "Isi saran atau kritik"
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Jika true tampil di papan aspirasi publik, jika false hanya pengurus OSIS"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Baru", "Diproses", "Selesai"],
+          "description": "Status tindak lanjut OSIS"
+        },
+        "adminReply": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 500,
+          "description": "Tanggapan resmi pengurus OSIS"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu dibuat"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu diperbarui"
+        }
+      },
+      "required": [
+        "authorUid",
+        "senderName",
+        "className",
+        "feedbackType",
+        "category",
+        "message",
+        "isPublic",
+        "status",
+        "adminReply",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OsisEvent": {
+      "title": "OsisEvent",
+      "description": "Informasi agenda dan program kerja kegiatan OSIS SMKN 3 Pacitan",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "description": "Nama kegiatan OSIS"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Akan Datang", "Terlaksana", "Program Kerja"],
+          "description": "Kategori status kegiatan"
+        },
+        "dateLabel": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 60,
+          "description": "Label tanggal pelaksanaan"
+        },
+        "location": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Lokasi kegiatan"
+        },
+        "organizer": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Sekbid atau panitia penanggung jawab"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 240,
+          "description": "Ringkasan kegiatan"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 1500,
+          "description": "Deskripsi lengkap kegiatan"
+        },
+        "imageUrl": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300,
+          "description": "Path gambar kegiatan"
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Status publikasi kegiatan"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu dibuat"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waktu diperbarui"
+        }
+      },
+      "required": [
+        "title",
+        "category",
+        "dateLabel",
+        "location",
+        "organizer",
+        "summary",
+        "description",
+        "imageUrl",
+        "isPublished",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SocialSettings": {
+      "title": "SocialSettings",
+      "description": "Konfigurasi akun resmi Instagram dan TikTok SMKN 3 Pacitan & OSIS",
+      "type": "object",
+      "properties": {
+        "schoolInstagramHandle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "schoolInstagramUrl": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "osisInstagramHandle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "osisInstagramUrl": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "schoolTiktokHandle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "schoolTiktokUrl": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "osisTiktokHandle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "osisTiktokUrl": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "schoolInstagramHandle",
+        "schoolInstagramUrl",
+        "osisInstagramHandle",
+        "osisInstagramUrl",
+        "schoolTiktokHandle",
+        "schoolTiktokUrl",
+        "osisTiktokHandle",
+        "osisTiktokUrl",
+        "updatedAt"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Daftar pengurus OSIS yang memiliki hak kelola konten",
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": ["admin"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["role", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/batches/{batchId}": {
+      "schema": { "$ref": "#/entities/Batch" },
+      "description": "Daftar angkatan beserta tema untuk portal barcode kenang-kenangan"
+    },
+    "/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/Memory" },
+      "description": "Kenang-kenangan siswa tiap angkatan"
+    },
+    "/feedback/{feedbackId}": {
+      "schema": { "$ref": "#/entities/Feedback" },
+      "description": "Saran, kritik, dan aspirasi siswa untuk OSIS SMKN 3 Pacitan"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/OsisEvent" },
+      "description": "Informasi kegiatan dan program kerja OSIS SMKN 3 Pacitan"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/SocialSettings" },
+      "description": "Pengaturan media sosial resmi Instagram dan TikTok"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Pengurus OSIS terverifikasi"
+    }
+  }
+}
